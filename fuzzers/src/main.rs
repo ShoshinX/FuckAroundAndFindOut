@@ -1,6 +1,8 @@
 use rand::prelude::*;
+use tracing::{event, instrument, Level};
+use tracing_subscriber::FmtSubscriber;
 
-enum RunnerState {
+pub enum RunnerState {
     FAIL,
     PASS,
     UNRESOLVED,
@@ -17,7 +19,9 @@ pub trait Fuzzer {
 }
 
 // okay this is cool
+#[instrument]
 fn fuzzer(max_length: u32, char_start: u8, char_range: u8) -> String {
+    event!(Level::INFO, "inside my_function!");
     let mut rng: ThreadRng = thread_rng();
     let x: u32 = rng.gen_range(0..max_length);
     let mut out: String = "".to_owned();
@@ -27,6 +31,12 @@ fn fuzzer(max_length: u32, char_start: u8, char_range: u8) -> String {
     out
 }
 
+pub trait Runner {
+    fn run(&self, input: String) -> (String, RunnerState);
+}
+
 fn main() {
+    let subscriber = FmtSubscriber::new();
+    let _ = tracing::subscriber::set_global_default(subscriber);
     println!("Hello, world! {:?}", fuzzer(10, b'a', 32));
 }
